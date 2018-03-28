@@ -11,7 +11,20 @@ from Queue import Queue
 from threading import Thread
 
 rootJavaIntroclass= os.path.dirname(__file__) + "/../dataset"
-rootIntroclass="/home/thomas/Downloads/IntroClass"
+rootIntroclass = "%s/%s" % (os.getcwd().rsplit("/",1)[0], "IntroClass")
+
+
+def runMaven(result, results):
+	global equivalentCount, current, startTime, notCompiledCount, toRemove
+	pathJavaProject = os.path.join(rootJavaIntroclass, result['projectName'], result['projectUser'], result['projectUserVersion'])
+	cmd = """
+	cd %s;
+	mvn clean compile
+	""" % (pathJavaProject)
+	print "Compiling for %s ; %s ; %s" % (result['projectName'], result['projectUser'], result['projectUserVersion'])
+	p = subprocess.Popen(cmd, shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+	out, err = p.communicate()
+	return out.strip(' \t\n\r')
 
 
 class Worker(Thread):
@@ -154,8 +167,8 @@ def init():
 			if "equivalent" in result and result['equivalent']:
 				current += 1
 				equivalentCount += 1
-				continue
-			pool.add_task(processResult, result, results)
+				# continue
+			pool.add_task(runMaven, result, results)
 
 		pool.wait_completion()
 
